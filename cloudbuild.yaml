@@ -1,12 +1,12 @@
 steps:
 # --- ÉTAPE 1: Build du Frontend ---
-- name: 'gcr.io/cloud-builders/npm'
+- name: 'gcr.io/cloud-builders/npm:20'
   args: ['install']
-- name: 'gcr.io/cloud-builders/npm'
+- name: 'gcr.io/cloud-builders/npm:20'
   args: ['run', 'build']
 
 # --- ÉTAPE 2: [NOUVELLE STRATÉGIE ROBUSTE] Déploiement sur Firebase Hosting ---
-- name: 'gcr.io/cloud-builders/npm'
+- name: 'gcr.io/cloud-builders/npm:20'
   entrypoint: 'npx'
   args: ['-p', 'firebase-tools', 'firebase', 'deploy', '--only', 'hosting', '--project', '${PROJECT_ID}', '--token', '${_FIREBASE_TOKEN}']
 
