@@ -1,0 +1,39 @@
+steps:
+# --- ÉTAPE 1: Build du Frontend ---
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+  dir: '.' 
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'build']
+  dir: '.'
+
+# --- ÉTAPE 2: Déploiement sur Firebase Hosting ---
+- name: 'gcr.io/firebase/firebase'
+  args: ['deploy', '--only', 'hosting', '--project', '${PROJECT_ID}']
+  dir: '.'
+
+# --- ÉTAPES BACKEND TEMPORAIREMENT DÉSACTIVÉES ---
+# # --- ÉTAPE 3: Build de l'image Docker du Backend ---
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: ['build', '-t', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA', '.']
+#   dir: 'backend' 
+# 
+# # --- ÉTAPE 4: Push de l'image sur Artifact Registry ---
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: ['push', 'europe-west1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA']
+#   dir: 'backend'
+# 
+# # --- ÉTAPE 5: Déploiement sur Cloud Run ---
+# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#   entrypoint: gcloud
+#   args:
+#     - 'run'
+#     - 'deploy'
+#     - 'eventflow-backend' 
+#     - '--image=europe-west1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA'
+#     - '--region=europe-west1'
+#     - '--platform=managed'
+#     - '--allow-unauthenticated'
+# 
+# images:
+# - 'europe-west1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA'
