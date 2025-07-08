@@ -26,7 +26,7 @@ function App() {
         <h1>EventFlow IFC</h1>
         {user ? (
           <div>
-            <p>Bienvenue, {user.displayName} ({user.email})</p>
+            <p>Bienvenue , {user.displayName} ({user.email})</p>
             <button onClick={handleLogout}>Se déconnecter</button>
           </div>
         ) : (
