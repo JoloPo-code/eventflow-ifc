@@ -1,0 +1,8 @@
+[
+    {
+      "origin": ["https://eventflow-ifc.web.app", "https://projets.ifcambodge.com"],
+      "method": ["GET", "POST", "PUT"],
+      "responseHeader": ["Content-Type", "Authorization"],
+      "maxAgeSeconds": 3600
+    }
+  ]

@@ -1,0 +1,23 @@
+{
+  "hosting": {
+    "public": "build", // Ou 'dist', selon votre outil de build frontend
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**", // Redirige tous les appels API...
+        "run": {
+          "serviceId": "eventflow-backend", // ...vers votre service Cloud Run
+          "region": "europe-west1" 
+        }
+      },
+      {
+        "source": "**", // Pour toutes les autres URLs...
+        "destination": "/index.html" // ...renvoyer l'application React/Vue (SPA)
+      }
+    ]
+  }
+}
