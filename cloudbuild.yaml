@@ -5,14 +5,10 @@ steps:
 - name: 'gcr.io/cloud-builders/npm'
   args: ['run', 'build']
 
-# --- ÉTAPE 2: [NOUVELLE STRATÉGIE] Déploiement sur Firebase Hosting ---
-# Installe les outils Firebase
+# --- ÉTAPE 2: [NOUVELLE STRATÉGIE ROBUSTE] Déploiement sur Firebase Hosting ---
 - name: 'gcr.io/cloud-builders/npm'
-  args: ['install', '-g', 'firebase-tools']
-# Lance le déploiement
-- name: 'gcr.io/cloud-builders/npm'
-  entrypoint: 'firebase'
-  args: ['deploy', '--only', 'hosting', '--project', '${PROJECT_ID}']
+  entrypoint: 'npx'
+  args: ['-p', 'firebase-tools', 'firebase', 'deploy', '--only', 'hosting', '--project', '${PROJECT_ID}', '--token', '${_FIREBASE_TOKEN}']
 
 # --- ÉTAPES BACKEND TEMPORAIREMENT DÉSACTIVÉES ---
 # # --- ÉTAPE 3: Build de l'image Docker du Backend ---
