@@ -2,15 +2,17 @@ steps:
 # --- ÉTAPE 1: Build du Frontend ---
 - name: 'gcr.io/cloud-builders/npm'
   args: ['install']
-  dir: '.' 
 - name: 'gcr.io/cloud-builders/npm'
   args: ['run', 'build']
-  dir: '.'
 
-# --- ÉTAPE 2: Déploiement sur Firebase Hosting ---
-- name: 'gcr.io/firebase/firebase'
+# --- ÉTAPE 2: [NOUVELLE STRATÉGIE] Déploiement sur Firebase Hosting ---
+# Installe les outils Firebase
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install', '-g', 'firebase-tools']
+# Lance le déploiement
+- name: 'gcr.io/cloud-builders/npm'
+  entrypoint: 'firebase'
   args: ['deploy', '--only', 'hosting', '--project', '${PROJECT_ID}']
-  dir: '.'
 
 # --- ÉTAPES BACKEND TEMPORAIREMENT DÉSACTIVÉES ---
 # # --- ÉTAPE 3: Build de l'image Docker du Backend ---
@@ -38,6 +40,5 @@ steps:
 # images:
 # - 'europe-west1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA'
 
-# [AJOUT POUR CORRIGER L'ERREUR DE LOGS]
 options:
   logging: CLOUD_LOGGING_ONLY
