@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "eventflow-ifc",
+    "site": "eventflow-ifc-e74c5",
     "public": "build",
     "ignore": [
       "firebase.json",
