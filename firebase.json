@@ -1,6 +1,7 @@
 {
   "hosting": {
-    "public": "build", // Ou 'dist', selon votre outil de build frontend
+    "site": "eventflow-ifc",
+    "public": "build",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -8,15 +9,15 @@
     ],
     "rewrites": [
       {
-        "source": "/api/**", // Redirige tous les appels API...
+        "source": "/api/**",
         "run": {
-          "serviceId": "eventflow-backend", // ...vers votre service Cloud Run
-          "region": "europe-west1" 
+          "serviceId": "eventflow-backend",
+          "region": "europe-west1"
         }
       },
       {
-        "source": "**", // Pour toutes les autres URLs...
-        "destination": "/index.html" // ...renvoyer l'application React/Vue (SPA)
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   }
