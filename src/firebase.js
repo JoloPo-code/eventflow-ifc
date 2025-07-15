@@ -3,12 +3,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // Remplacer par vos propres clés depuis les paramètres du projet Firebase
 const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY",
-  authDomain: "VOTRE_AUTH_DOMAIN",
-  projectId: "VOTRE_PROJECT_ID",
-  storageBucket: "VOTRE_STORAGE_BUCKET",
-  messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-  appId: "VOTRE_APP_ID"
+  apiKey: "AIzaSyCopZ2cOQyH_lWEF2vsuav7b_p1Wcp4Hx4",
+  authDomain: "eventflow-ifc-e74c5.firebaseapp.com",
+  projectId: "eventflow-ifc-e74c5",
+  storageBucket: "eventflow-ifc-e74c5.firebasestorage.app",
+  messagingSenderId: "522300759636",
+  appId: "1:522300759636:web:a28a386c1d22596efe57c1",
+  measurementId: "G-BRB21SC6NK"
 };
 
 const app = initializeApp(firebaseConfig);

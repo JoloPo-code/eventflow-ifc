@@ -1,0 +1,63 @@
+{
+    // Voir https://go.microsoft.com/fwlink/?LinkId=733558
+    // pour la documentation sur le format tasks.json
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start Proxy",
+        "type": "shell",
+        "command": "./cloud-sql-proxy.exe",
+        "args": [
+          "eventflow-ifc:asia-southeast1:eventflow-ifc-db",
+          "--port=5433"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}/backend"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "group": "dev-servers",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "Start Backend",
+        "type": "shell",
+        "command": "node",
+        "args": [
+          "server.js"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}/backend"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "group": "dev-servers",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "Start Frontend",
+        "type": "shell",
+        "command": "npm",
+        "args": [
+          "start"
+        ],
+        "problemMatcher": [],
+        "presentation": {
+          "group": "dev-servers",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "Start All Dev Servers",
+        "dependsOn": [
+          "Start Proxy",
+          "Start Backend",
+          "Start Frontend"
+        ],
+        "problemMatcher": []
+      }
+    ]
+  }
+  
