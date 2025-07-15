@@ -11,6 +11,7 @@ const path = require('path');
 
 // --- Définition des templates pour chaque fichier ---
 
+// [MODIFIÉ] L'API_URL est maintenant relative pour fonctionner en production
 const appTemplate = `
 import React, { useState, useEffect } from 'react';
 import { auth, signInWithGoogle } from './firebase';
@@ -19,6 +20,8 @@ import ProjectList from './ProjectList';
 import ProjectForm from './ProjectForm';
 import ProjectResources from './ProjectResources';
 import AgendaView from './AgendaView';
+
+const API_URL = '/api'; // Changement crucial pour la production
 
 function App() {
   const [user, setUser] = useState(null);
@@ -46,7 +49,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8080/api/projects');
+      const response = await fetch(\`\${API_URL}/projects\`);
       if (!response.ok) throw new Error("La réponse du serveur n'est pas OK");
       const data = await response.json();
       setProjects(data);
@@ -62,8 +65,8 @@ function App() {
     setLoading(true);
     setError('');
     const url = editingProjectId 
-      ? \`http://localhost:8080/api/projects/\${editingProjectId}\` 
-      : \`http://localhost:8080/api/projects\`;
+      ? \`\${API_URL}/projects/\${editingProjectId}\` 
+      : \`\${API_URL}/projects\`;
     const method = editingProjectId ? 'PUT' : 'POST';
 
     try {
@@ -93,7 +96,7 @@ function App() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch(\`http://localhost:8080/api/projects/\${projectId}\`, { method: 'DELETE' });
+        const response = await fetch(\`\${API_URL}/projects/\${projectId}\`, { method: 'DELETE' });
         if (response.ok) {
           if (editingProjectId === projectId) {
             setEditingProjectId(null);
@@ -116,7 +119,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(\`http://localhost:8080/api/projects/\${projectId}/duplicate\`, { method: 'POST' });
+      const response = await fetch(\`\${API_URL}/projects/\${projectId}/duplicate\`, { method: 'POST' });
       const newProject = await response.json();
       if (response.ok) {
         await fetchProjects();
@@ -457,6 +460,8 @@ export default ProjectList;
 const projectResourcesTemplate = `
 import React, { useState, useEffect } from 'react';
 
+const API_URL = '/api'; // Changement crucial pour la production
+
 function ProjectResources({ project }) {
   const [resources, setResources] = useState([]);
   const [newResource, setNewResource] = useState({
@@ -479,7 +484,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(\`http://localhost:8080/api/projects/\${project.id}/resources\`);
+      const response = await fetch(\`\${API_URL}/projects/\${project.id}/resources\`);
       if (!response.ok) throw new Error('Could not fetch resources');
       const data = await response.json();
       setResources(data);
@@ -501,7 +506,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(\`http://localhost:8080/api/projects/\${project.id}/resources\`, {
+      const response = await fetch(\`\${API_URL}/projects/\${project.id}/resources\`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newResource)
@@ -522,7 +527,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(\`http://localhost:8080/api/resources/\${resourceId}\`, { method: 'DELETE' });
+      const response = await fetch(\`\${API_URL}/resources/\${resourceId}\`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Could not delete resource');
       fetchResources();
     } catch (err) {
@@ -628,6 +633,8 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const API_URL = '/api'; // Changement crucial pour la production
+
 function AgendaView({ onEventClick }) {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
@@ -639,7 +646,7 @@ function AgendaView({ onEventClick }) {
   const fetchEvents = async () => {
     setError('');
     try {
-      const response = await fetch('http://localhost:8080/api/calendar-events');
+      const response = await fetch(\`\${API_URL}/calendar-events\`);
       if (!response.ok) throw new Error('Could not fetch events');
       const data = await response.json();
       const formattedEvents = data.map(event => ({

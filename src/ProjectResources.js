@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = '/api'; // Changement crucial pour la production
+
 function ProjectResources({ project }) {
   const [resources, setResources] = useState([]);
   const [newResource, setNewResource] = useState({
@@ -22,7 +24,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:8080/api/projects/${project.id}/resources`);
+      const response = await fetch(`${API_URL}/projects/${project.id}/resources`);
       if (!response.ok) throw new Error('Could not fetch resources');
       const data = await response.json();
       setResources(data);
@@ -44,7 +46,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:8080/api/projects/${project.id}/resources`, {
+      const response = await fetch(`${API_URL}/projects/${project.id}/resources`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newResource)
@@ -65,7 +67,7 @@ function ProjectResources({ project }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:8080/api/resources/${resourceId}`, { method: 'DELETE' });
+      const response = await fetch(`${API_URL}/resources/${resourceId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Could not delete resource');
       fetchResources();
     } catch (err) {

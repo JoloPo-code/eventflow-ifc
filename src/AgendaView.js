@@ -19,6 +19,8 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const API_URL = '/api'; // Changement crucial pour la production
+
 function AgendaView({ onEventClick }) {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
@@ -30,7 +32,7 @@ function AgendaView({ onEventClick }) {
   const fetchEvents = async () => {
     setError('');
     try {
-      const response = await fetch('http://localhost:8080/api/calendar-events');
+      const response = await fetch(`${API_URL}/calendar-events`);
       if (!response.ok) throw new Error('Could not fetch events');
       const data = await response.json();
       const formattedEvents = data.map(event => ({

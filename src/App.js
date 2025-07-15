@@ -6,6 +6,8 @@ import ProjectForm from './ProjectForm';
 import ProjectResources from './ProjectResources';
 import AgendaView from './AgendaView';
 
+const API_URL = '/api'; // Changement crucial pour la production
+
 function App() {
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -32,7 +34,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8080/api/projects');
+      const response = await fetch(`${API_URL}/projects`);
       if (!response.ok) throw new Error("La réponse du serveur n'est pas OK");
       const data = await response.json();
       setProjects(data);
@@ -48,8 +50,8 @@ function App() {
     setLoading(true);
     setError('');
     const url = editingProjectId 
-      ? `http://localhost:8080/api/projects/${editingProjectId}` 
-      : `http://localhost:8080/api/projects`;
+      ? `${API_URL}/projects/${editingProjectId}` 
+      : `${API_URL}/projects`;
     const method = editingProjectId ? 'PUT' : 'POST';
 
     try {
@@ -79,7 +81,7 @@ function App() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch(`http://localhost:8080/api/projects/${projectId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/projects/${projectId}`, { method: 'DELETE' });
         if (response.ok) {
           if (editingProjectId === projectId) {
             setEditingProjectId(null);
@@ -102,7 +104,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:8080/api/projects/${projectId}/duplicate`, { method: 'POST' });
+      const response = await fetch(`${API_URL}/projects/${projectId}/duplicate`, { method: 'POST' });
       const newProject = await response.json();
       if (response.ok) {
         await fetchProjects();
