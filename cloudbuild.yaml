@@ -7,39 +7,14 @@ steps:
   entrypoint: 'npm'
   args: ['run', 'build']
 
-# --- [NOUVEAU] ÉTAPE 2: Récupérer la clé d'authentification ---
-- name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: 'gcloud'
-  args:
-    - 'secrets'
-    - 'versions'
-    - 'access'
-    - 'latest'
-    - '--secret=firebase-deploy-key'
-    - '--format=get(payload.data)'
-  id: 'get-secret'
-
-# --- ÉTAPE 3: Déployer sur Firebase Hosting en utilisant la clé ---
+# --- ÉTAPE 2: Déployer sur Firebase Hosting ---
+# Le compte de service a maintenant les permissions, donc une commande simple suffit.
 - name: 'node:20'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    # Décode la clé et l'enregistre dans un fichier
-    echo "$$GET_SECRET_PAYLOAD" | base64 -d > /workspace/key.json
-    # Configure l'environnement pour utiliser cette clé
-    export GOOGLE_APPLICATION_CREDENTIALS=/workspace/key.json
-    # Lance le déploiement
-    npx -p firebase-tools firebase deploy --only hosting:eventflow-ifc --project='${PROJECT_ID}'
-  secretEnv: ['GET_SECRET_PAYLOAD']
+  entrypoint: 'npx'
+  args: ['-p', 'firebase-tools', 'firebase', 'deploy', '--only', 'hosting:eventflow-ifc', '--project', '${PROJECT_ID}']
 
 # --- ÉTAPES BACKEND (toujours désactivées pour le moment) ---
 # ...
-
-availableSecrets:
-  secretManager:
-  - versionName: projects/${PROJECT_NUMBER}/secrets/firebase-deploy-key/versions/latest
-    env: 'GET_SECRET_PAYLOAD'
 
 options:
   logging: CLOUD_LOGGING_ONLY
