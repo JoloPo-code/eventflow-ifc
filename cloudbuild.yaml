@@ -8,13 +8,35 @@ steps:
   args: ['run', 'build']
 
 # --- ÉTAPE 2: Déployer sur Firebase Hosting ---
-# Le compte de service a maintenant les permissions, donc une commande simple suffit.
 - name: 'node:20'
   entrypoint: 'npx'
   args: ['-p', 'firebase-tools', 'firebase', 'deploy', '--only', 'hosting:eventflow-ifc', '--project', '${PROJECT_ID}']
 
-# --- ÉTAPES BACKEND (toujours désactivées pour le moment) ---
-# ...
+# --- [RÉACTIVÉ] ÉTAPE 3: Build de l'image Docker du Backend ---
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'asia-southeast1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA', './backend']
+  
+# --- [RÉACTIVÉ] ÉTAPE 4: Push de l'image sur Artifact Registry ---
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia-southeast1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA']
+
+# --- [RÉACTIVÉ] ÉTAPE 5: Déploiement sur Cloud Run ---
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - 'eventflow-backend' # Le nom de votre service Cloud Run
+    - '--image=asia-southeast1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA'
+    - '--region=asia-southeast1'
+    - '--platform=managed'
+    - '--allow-unauthenticated'
+    - '--add-cloudsql-instances=eventflow-ifc:asia-southeast1:eventflow-ifc-db'
+    - '--set-env-vars=DB_PASSWORD=[Angk0rTh0m1xXx011]' # Remplacez par votre mot de passe simple
+
+# Spécifie les images à stocker
+images:
+- 'asia-southeast1-docker.pkg.dev/${PROJECT_ID}/eventflow-repo/eventflow-backend:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
