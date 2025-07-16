@@ -9,13 +9,6 @@
     ],
     "rewrites": [
       {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "eventflow-backend",
-          "region": "asia-southeast1"
-        }
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
