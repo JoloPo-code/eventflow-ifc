@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+/*
+================================================================================
+ Fichier : src/ProjectResources.js
+================================================================================
+*/
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
-const API_URL = '/api'; // Changement crucial pour la production
+const API_URL = '/api';
 
 function ProjectResources({ project }) {
   const [resources, setResources] = useState([]);
@@ -12,14 +17,7 @@ function ProjectResources({ project }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (project) {
-      fetchResources();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project]);
-
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     if (!project) return;
     setLoading(true);
     setError('');
@@ -34,7 +32,13 @@ function ProjectResources({ project }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [project]); // Mettre project en dépendance
+
+  useEffect(() => {
+    if (project) {
+      fetchResources();
+    }
+  }, [project, fetchResources]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -77,22 +81,26 @@ function ProjectResources({ project }) {
       setLoading(false);
     }
   };
-
-  const durationOptions = [];
-  for (let i = 15; i <= 480; i += 15) {
+  
+  // [OPTIMISÉ] Utilisation de useMemo pour ne calculer les options qu'une seule fois
+  const durationOptions = useMemo(() => {
+    const options = [];
+    for (let i = 15; i <= 480; i += 15) {
       const hours = Math.floor(i / 60);
       const minutes = i % 60;
       let label = '';
       if (hours > 0) label += `${hours}h`;
       if (minutes > 0) label += ` ${minutes}min`;
-      durationOptions.push({ value: i, label: label.trim() });
-  }
-  
+      options.push({ value: i, label: label.trim() });
+    }
+    return options;
+  }, []);
+
   const getEndTime = (startTime, duration) => {
     if (!startTime || !duration) return '';
     const start = new Date(startTime);
     const end = new Date(start.getTime() + duration * 60000);
-    return end.toLocaleString('fr-FR');
+    return end.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
   }
 
   if (!project) return null;
@@ -101,9 +109,9 @@ function ProjectResources({ project }) {
     <div className="animate-fade-in">
       <h3 className="text-xl font-bold text-gray-700 mb-4">Ressources Humaines Requises</h3>
       {error && <p className="text-red-500">{error}</p>}
-      
+
       <form onSubmit={handleAddResource} className="bg-white p-4 rounded-lg shadow mb-6 space-y-3">
-        <input 
+        <input
           type="text"
           name="role_required"
           value={newResource.role_required}
@@ -113,16 +121,16 @@ function ProjectResources({ project }) {
           required
         />
         <div className="grid grid-cols-2 gap-2">
-            <div>
-                <label className="text-sm">Début</label>
-                <input type="datetime-local" name="start_time" value={newResource.start_time} onChange={handleFormChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" required />
-            </div>
-            <div>
-                <label className="text-sm">Durée</label>
-                <select name="duration_minutes" value={newResource.duration_minutes} onChange={handleFormChange} className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                    {durationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-            </div>
+          <div>
+            <label className="text-sm">Début</label>
+            <input type="datetime-local" name="start_time" value={newResource.start_time} onChange={handleFormChange} className="w-full px-3 py-2 border border-gray-300 rounded-md" required />
+          </div>
+          <div>
+            <label className="text-sm">Durée</label>
+            <select name="duration_minutes" value={newResource.duration_minutes} onChange={handleFormChange} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+              {durationOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
         </div>
         <button type="submit" disabled={loading} className="w-full py-2 px-4 text-white bg-blue-500 hover:bg-blue-600 rounded-md disabled:bg-blue-300">
           {loading ? 'Ajout...' : 'Ajouter Ressource'}
@@ -135,10 +143,10 @@ function ProjectResources({ project }) {
             <div>
               <p className="font-semibold">{res.role_required}</p>
               <p className="text-sm text-gray-500">
-                Début: {new Date(res.start_time).toLocaleString('fr-FR')} (Fin estimée: {getEndTime(res.start_time, res.duration_minutes)})
+                Début: {new Date(res.start_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} (Fin: {getEndTime(res.start_time, res.duration_minutes)})
               </p>
             </div>
-            <button onClick={() => handleDeleteResource(res.id)} className="text-red-500 hover:text-red-700">
+            <button onClick={() => handleDeleteResource(res.id)} className="text-red-500 hover:text-red-700 text-xl font-bold">
               &times;
             </button>
           </li>

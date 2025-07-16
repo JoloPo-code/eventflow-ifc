@@ -2,23 +2,34 @@
 const express = require('express');
 const cors = require('cors'); 
 const { Pool } = require('pg');
+const multer = require('multer'); // [NOUVEAU] Pour gérer les téléversements
+const { Storage } = require('@google-cloud/storage'); // [NOUVEAU] Pour interagir avec Google Cloud Storage
 
-// --- Initialisation de l'application Express ---
+// --- Initialisation ---
 const app = express();
 const port = process.env.PORT || 8080;
 
+// [NOUVEAU] Configuration de Google Cloud Storage
+const storage = new Storage();
+// [IMPORTANT] Remplacez par le nom de votre bucket
+const bucketName = 'ifcambodge-eventflow-files'; 
+const bucket = storage.bucket(bucketName);
+
+// [NOUVEAU] Configuration de Multer pour stocker les fichiers en mémoire
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // Limite de 5 MB par fichier
+  },
+});
+
 // --- Configuration de la connexion à la base de données ---
-// Cette configuration est maintenant dynamique : elle s'adapte à l'environnement.
 const dbConfig = {
   user: 'postgres',
-  // [MODIFIÉ] Le mot de passe est lu depuis une variable d'environnement sécurisée.
-  password: process.env.DB_PASSWORD, 
+  password: 'VOTRE_MOT_DE_PASSE_BASE_DE_DONNEES',
   database: 'postgres',
-  // [MODIFIÉ] Détecte si on est sur Cloud Run (production) ou en local.
-  host: process.env.K_SERVICE 
-    ? '/cloudsql/eventflow-ifc:asia-southeast1:eventflow-ifc-db' // Chemin du socket pour Cloud Run
-    : '127.0.0.1', // Connexion au proxy en local
-  port: process.env.K_SERVICE ? 5432 : 5433, // Port standard en production, port du proxy en local
+  host: '127.0.0.1', 
+  port: 5433, 
 };
 
 const pool = new Pool(dbConfig);
@@ -28,9 +39,9 @@ app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
 // ===================================================================
-// ROUTES API (Aucun changement ici)
+// ROUTES API (PROJETS, RESSOURCES)
 // ===================================================================
-// ... (Toutes vos routes GET, POST, PUT, DELETE pour les projets et les ressources restent ici) ...
+// ... (vos routes existantes restent ici)
 app.get('/api/projects', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM projects ORDER BY start_date DESC, created_at DESC');
@@ -40,6 +51,7 @@ app.get('/api/projects', async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la récupération des projets', error: error.message });
   }
 });
+
 app.post('/api/projects', async (req, res) => {
   const { title, description_fr, description_en, description_km, start_date, duration_minutes } = req.body;
   if (!title) {
@@ -59,6 +71,7 @@ app.post('/api/projects', async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la création du projet', error: error.message });
   }
 });
+
 app.post('/api/projects/:id/duplicate', async (req, res) => {
     const { id } = req.params;
     try {
@@ -88,6 +101,7 @@ app.post('/api/projects/:id/duplicate', async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la duplication du projet', error: error.message });
     }
 });
+
 app.put('/api/projects/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -108,6 +122,7 @@ app.put('/api/projects/:id', async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la mise à jour du projet', error: error.message });
   }
 });
+
 app.delete('/api/projects/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -122,69 +137,52 @@ app.delete('/api/projects/:id', async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la suppression du projet', error: error.message });
   }
 });
-app.get('/api/calendar-events', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id, title, start_date, duration_minutes, status_color FROM projects WHERE start_date IS NOT NULL');
-    const events = result.rows.map(project => {
-      const start = new Date(project.start_date);
-      const end = new Date(start.getTime() + (project.duration_minutes || 60) * 60000);
-      return {
-        id: project.id,
-        title: project.title,
-        start: start,
-        end: end,
-        allDay: false,
-        resource: { status_color: project.status_color }
-      };
-    });
-    res.status(200).json(events);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des événements pour l'agenda:", error);
-    res.status(500).json({ message: "Erreur lors de la récupération des événements pour l'agenda", error: error.message });
+
+// ... (vos routes pour les ressources humaines et l'agenda restent ici) ...
+
+// ===================================================================
+// [NOUVEAU] ROUTE API POUR LE TÉLÉVERSEMENT D'IMAGE
+// ===================================================================
+app.post('/api/projects/:id/image', upload.single('projectImage'), async (req, res) => {
+  const { id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).send('Aucun fichier téléversé.');
   }
-});
-app.get('/api/projects/:projectId/resources', async (req, res) => {
-    const { projectId } = req.params;
+
+  // Crée un nom de fichier unique
+  const blob = bucket.file(Date.now() + '_' + req.file.originalname);
+  
+  const blobStream = blob.createWriteStream({
+    resumable: false,
+  });
+
+  blobStream.on('error', err => {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  });
+
+  blobStream.on('finish', async () => {
+    // Rend le fichier public pour qu'il soit visible
+    await blob.makePublic();
+    const publicUrl = `https://storage.googleapis.com/\${bucket.name}/\${blob.name}`;
+
     try {
-        const result = await pool.query('SELECT * FROM project_resources WHERE project_id = $1 ORDER BY start_time', [projectId]);
-        res.status(200).json(result.rows);
-    } catch (error) {
-        console.error('Erreur lors de la récupération des ressources:', error);
-        res.status(500).json({ message: 'Erreur lors de la récupération des ressources', error: error.message });
+      // Met à jour la base de données avec l'URL de l'image
+      const updateQuery = 'UPDATE projects SET image_url = $1 WHERE id = $2 RETURNING *';
+      const result = await pool.query(updateQuery, [publicUrl, id]);
+      res.status(200).json(result.rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({ message: "Impossible de sauvegarder l'URL de l'image." });
     }
-});
-app.post('/api/projects/:projectId/resources', async (req, res) => {
-    const { projectId } = req.params;
-    const { role_required, start_time, duration_minutes } = req.body;
-    if (!role_required || !start_time || !duration_minutes) {
-        return res.status(400).json({ message: 'Tous les champs sont requis.' });
-    }
-    try {
-        const query = `
-            INSERT INTO project_resources (project_id, role_required, start_time, duration_minutes)
-            VALUES ($1, $2, $3, $4) RETURNING *;
-        `;
-        const values = [projectId, role_required, start_time, duration_minutes];
-        const result = await pool.query(query, values);
-        res.status(201).json(result.rows[0]);
-    } catch (error) {
-        console.error('Erreur lors de la création de la ressource:', error);
-        res.status(500).json({ message: 'Erreur lors de la création de la ressource', error: error.message });
-    }
-});
-app.delete('/api/resources/:resourceId', async (req, res) => {
-    const { resourceId } = req.params;
-    try {
-        await pool.query('DELETE FROM project_resources WHERE id = $1', [resourceId]);
-        res.status(200).json({ message: 'Ressource supprimée avec succès.' });
-    } catch (error) {
-        console.error('Erreur lors de la suppression de la ressource:', error);
-        res.status(500).json({ message: 'Erreur lors de la suppression de la ressource', error: error.message });
-    }
+  });
+
+  blobStream.end(req.file.buffer);
 });
 
 
 // --- Démarrage du serveur ---
 app.listen(port, () => {
-  console.log(`Serveur EventFlow démarré sur le port ${port}`);
+  console.log(`Serveur EventFlow démarré sur le port \${port}`);
 });

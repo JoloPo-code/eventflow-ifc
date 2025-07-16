@@ -1,3 +1,8 @@
+/*
+================================================================================
+ Fichier : src/AgendaView.js
+================================================================================
+*/
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import format from 'date-fns/format';
@@ -19,17 +24,13 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const API_URL = '/api'; // Changement crucial pour la production
+const API_URL = '/api';
 
 function AgendaView({ onEventClick }) {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setError('');
     try {
       const response = await fetch(`${API_URL}/calendar-events`);
@@ -42,10 +43,16 @@ function AgendaView({ onEventClick }) {
       }));
       setEvents(formattedEvents);
     } catch (err) {
-      setError('Impossible de charger les événements de l\'agenda.');
+      // [CORRIGÉ] Nettoyage de la chaîne de caractères
+      setError("Impossible de charger les événements de l'agenda.");
       console.error(err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
 
   const eventPropGetter = useCallback(
     (event) => ({

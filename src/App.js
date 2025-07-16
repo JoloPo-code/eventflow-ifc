@@ -1,3 +1,8 @@
+/*
+================================================================================
+ Fichier : src/App.js
+================================================================================
+*/
 import React, { useState, useEffect } from 'react';
 import { auth, signInWithGoogle } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -6,7 +11,7 @@ import ProjectForm from './ProjectForm';
 import ProjectResources from './ProjectResources';
 import AgendaView from './AgendaView';
 
-const API_URL = '/api'; // Changement crucial pour la production
+const API_URL = '/api';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -25,6 +30,8 @@ function App() {
       setUser(currentUser);
       if (currentUser) {
         fetchProjects();
+      } else {
+        setProjects([]); // Vider les projets si l'utilisateur se déconnecte
       }
     });
     return () => unsubscribe();
@@ -49,8 +56,8 @@ function App() {
   const handleSaveProject = async (formData) => {
     setLoading(true);
     setError('');
-    const url = editingProjectId 
-      ? `${API_URL}/projects/${editingProjectId}` 
+    const url = editingProjectId
+      ? `${API_URL}/projects/${editingProjectId}`
       : `${API_URL}/projects`;
     const method = editingProjectId ? 'PUT' : 'POST';
 
@@ -64,7 +71,7 @@ function App() {
         const savedProject = await response.json();
         setIsCreating(false);
         setEditingProjectId(savedProject.id);
-        fetchProjects();
+        fetchProjects(); // Re-fetch pour la cohérence des données
       } else {
         const errorData = await response.json();
         setError(`Erreur: ${errorData.message || 'Opération impossible.'}`);
@@ -105,12 +112,16 @@ function App() {
     setError('');
     try {
       const response = await fetch(`${API_URL}/projects/${projectId}/duplicate`, { method: 'POST' });
-      const newProject = await response.json();
+      
+      // [CORRIGÉ] On vérifie d'abord la réponse avant de parser le JSON
       if (response.ok) {
+        const newProject = await response.json();
         await fetchProjects();
         setEditingProjectId(newProject.id);
+        setView('list'); // S'assurer que l'utilisateur voit le projet dupliqué
       } else {
-        setError(`Erreur: ${newProject.message || 'Impossible de dupliquer le projet.'}`);
+        const errorData = await response.json().catch(() => null); // Essayer de lire le JSON, mais ne pas planter si ça échoue
+        setError(`Erreur: ${errorData?.message || 'Impossible de dupliquer le projet.'}`);
       }
     } catch (error) {
       setError('Une erreur de communication est survenue.');
@@ -153,11 +164,11 @@ function App() {
               </button>
             </div>
           ) : (
-             <div className="flex-1 flex justify-end">
-               <button onClick={signInWithGoogle} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                  Se connecter avec Google
-                </button>
-             </div>
+            <div className="flex-1 flex justify-end">
+              <button onClick={signInWithGoogle} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Se connecter avec Google
+              </button>
+            </div>
           )}
         </header>
 
@@ -174,7 +185,7 @@ function App() {
 
             {loading && <p className="text-center text-blue-500 p-4">Chargement...</p>}
             {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative m-4">{error}</p>}
-            
+
             {view === 'list' ? (
               <main className="grid grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-169px)]">
                 <div className="p-8 border-r">
@@ -196,7 +207,7 @@ function App() {
                 <div className="p-8 bg-gray-50">
                   {showForm ? (
                     <div>
-                      <ProjectForm 
+                      <ProjectForm
                         projectToEdit={activeProject}
                         onSave={handleSaveProject}
                         onCancel={handleCancel}
@@ -221,15 +232,15 @@ function App() {
             )}
           </>
         )}
-        
+
         {!user && (
-           <div className="flex items-center justify-center h-[calc(100vh-105px)]">
-             <p className="text-gray-500 text-2xl">Veuillez vous connecter pour gérer les projets.</p>
-           </div>
+          <div className="flex items-center justify-center h-[calc(100vh-105px)]">
+            <p className="text-gray-500 text-2xl">Veuillez vous connecter pour gérer les projets.</p>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-export default App; // Force update5
+export default App;
